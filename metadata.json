@@ -1,0 +1,7 @@
+{
+  "name": "Mithila Islam Ishana Dashboard",
+  "description": "A high-performance student dashboard for BBA Section 3B, featuring real-time schedule tracking, attendance monitoring, and AI-powered study assistance.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
