@@ -1,16 +1,15 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Icons, SCHEDULE, COLOR_MAP, PAST_TRANSCRIPT } from './constants';
-import { ScheduleItem, CurrentStatus, AttendanceRecord, ChatMessage, Assignment, Grade, AssessmentType, TranscriptCourse } from './types';
-import ProgressCircle from './components/ProgressCircle';
-import { askStudyQuestion } from './services/geminiService';
+import { Icons, SCHEDULE, COLOR_MAP, PAST_TRANSCRIPT } from './constants.tsx';
+import { ScheduleItem, CurrentStatus, AttendanceRecord, ChatMessage, Assignment, Grade, AssessmentType } from './types.ts';
+import ProgressCircle from './components/ProgressCircle.tsx';
+import { askStudyQuestion } from './services/geminiService.ts';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'academic' | 'progress' | 'ask'>('dashboard');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   
-  // Data State
   const [attendance, setAttendance] = useState<AttendanceRecord>(() => {
     const saved = localStorage.getItem('attendance');
     return saved ? JSON.parse(saved) : {};
@@ -24,7 +23,6 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // UI State
   const [currentStatus, setCurrentStatus] = useState<CurrentStatus>({ type: 'free' });
   const [nextClass, setNextClass] = useState<ScheduleItem | null>(null);
   const [selectedAttendanceDate, setSelectedAttendanceDate] = useState(new Date());
@@ -34,7 +32,6 @@ const App: React.FC = () => {
   const [personalNote, setPersonalNote] = useState(() => localStorage.getItem('personalNote') || "You're doing amazing, Mithila! Keep shining! 💖");
   const [isEditingNote, setIsEditingNote] = useState(false);
 
-  // Ask Me State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
     const saved = localStorage.getItem('chatHistory');
     if (!saved) return [];
@@ -48,7 +45,6 @@ const App: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Class Progress Calculation
   const classProgress = useMemo(() => {
     if (currentStatus.type !== 'active' || !currentStatus.class) return 0;
     const [sh, sm] = currentStatus.class.startTime.split(':').map(Number);
@@ -61,7 +57,6 @@ const App: React.FC = () => {
     return Math.min(100, Math.max(0, (elapsed / duration) * 100));
   }, [currentStatus, currentTime]);
 
-  // Persistence
   useEffect(() => { localStorage.setItem('assignments', JSON.stringify(assignments)); }, [assignments]);
   useEffect(() => { localStorage.setItem('grades', JSON.stringify(grades)); }, [grades]);
   useEffect(() => { localStorage.setItem('attendance', JSON.stringify(attendance)); }, [attendance]);
@@ -152,7 +147,7 @@ const App: React.FC = () => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
       calculateStatus();
-    }, 10000); // Update every 10s
+    }, 10000);
     calculateStatus();
     return () => clearInterval(timer);
   }, [calculateStatus]);
@@ -186,6 +181,10 @@ const App: React.FC = () => {
     const percentage = total === 0 ? 0 : Math.round((present / total) * 100);
     return { total, present, percentage };
   };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isTyping]);
 
   return (
     <div className="min-h-screen bg-[#FFF5F7] dark:bg-[#1A0B0E] text-slate-900 dark:text-pink-50 pb-20 sm:pb-0 transition-colors duration-300 font-sans">
@@ -234,20 +233,13 @@ const App: React.FC = () => {
                   </h2>
                   <p className="text-slate-500 dark:text-pink-300/60 font-bold text-lg">Your academic empire is growing today.</p>
                 </div>
-                
                 <div className="bg-white dark:bg-[#2D1217] rounded-[3rem] p-10 border border-rose-100 dark:border-rose-900/20 shadow-2xl shadow-rose-500/5 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Icons.Sparkles className="w-32 h-32 text-rose-500" />
-                  </div>
+                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity"><Icons.Sparkles className="w-32 h-32 text-rose-500" /></div>
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-8">
                       <span className="px-4 py-2 bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 text-[10px] font-black rounded-full uppercase tracking-widest">Active Pulse</span>
-                      <div className="flex items-center gap-2 text-rose-400 font-mono text-xs">
-                         <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping" />
-                         LIVE TRACKING
-                      </div>
+                      <div className="flex items-center gap-2 text-rose-400 font-mono text-xs"><div className="w-2 h-2 bg-rose-500 rounded-full animate-ping" />LIVE TRACKING</div>
                     </div>
-                    
                     <div className="space-y-10">
                       <div className="flex gap-6 items-start">
                         <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-[1.5rem]"><Icons.Clock className="w-8 h-8 text-rose-500" /></div>
@@ -255,16 +247,10 @@ const App: React.FC = () => {
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status: {currentStatus.type.toUpperCase()}</p>
                           <h3 className="text-2xl font-black text-slate-800 dark:text-pink-50">{currentStatus.class ? currentStatus.class.title : nextClass ? nextClass.title : 'All Duties Fulfilled'}</h3>
                           <p className="text-sm text-slate-500 dark:text-pink-200/50 mt-1">{currentStatus.class ? `Room ${currentStatus.class.room}` : nextClass ? `Next at ${nextClass.startTime}` : 'Time for strategic rest.'}</p>
-                          
                           {currentStatus.type === 'active' && (
                             <div className="mt-6 space-y-2">
-                              <div className="flex justify-between text-[10px] font-black text-rose-400">
-                                <span>CLASS PROGRESS</span>
-                                <span>{Math.round(classProgress)}%</span>
-                              </div>
-                              <div className="w-full bg-rose-50 dark:bg-rose-900/20 h-2 rounded-full overflow-hidden">
-                                <div className="bg-rose-500 h-full transition-all duration-1000" style={{ width: `${classProgress}%` }} />
-                              </div>
+                              <div className="flex justify-between text-[10px] font-black text-rose-400"><span>CLASS PROGRESS</span><span>{Math.round(classProgress)}%</span></div>
+                              <div className="w-full bg-rose-50 dark:bg-rose-900/20 h-2 rounded-full overflow-hidden"><div className="bg-rose-500 h-full transition-all duration-1000" style={{ width: `${classProgress}%` }} /></div>
                             </div>
                           )}
                         </div>
@@ -273,7 +259,6 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
               <div className="space-y-8">
                 <div className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
                   <Icons.Heart className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:scale-110 transition-transform" />
@@ -281,13 +266,9 @@ const App: React.FC = () => {
                   <p className="text-lg italic font-medium leading-relaxed mb-6 opacity-90">"{personalNote}"</p>
                   <button onClick={() => setIsEditingNote(true)} className="px-4 py-2 bg-white/20 rounded-xl text-[10px] uppercase font-black hover:bg-white/30 transition-colors">Refine Vision</button>
                 </div>
-                
                 <div className="bg-white dark:bg-[#2D1217] p-8 rounded-[2.5rem] border border-rose-50 dark:border-rose-900/20 shadow-sm flex items-center gap-6">
                   <ProgressCircle percentage={parseFloat(calculateGPA()) * 25} size={80} strokeWidth={8} colorClass="text-green-500" />
-                  <div>
-                    <p className="text-3xl font-black text-slate-800 dark:text-pink-50">{calculateGPA()}</p>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Current CGPA</p>
-                  </div>
+                  <div><p className="text-3xl font-black text-slate-800 dark:text-pink-50">{calculateGPA()}</p><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Current CGPA</p></div>
                 </div>
               </div>
             </div>
@@ -302,18 +283,13 @@ const App: React.FC = () => {
                 date.setDate(date.getDate() + offset);
                 const isSelected = date.toDateString() === selectedAttendanceDate.toDateString();
                 return (
-                  <button 
-                    key={offset} 
-                    onClick={() => setSelectedAttendanceDate(date)}
-                    className={`flex-shrink-0 w-20 h-24 rounded-[1.5rem] flex flex-col items-center justify-center transition-all ${isSelected ? 'bg-rose-500 text-white shadow-2xl scale-110' : 'bg-white dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20'}`}
-                  >
+                  <button key={offset} onClick={() => setSelectedAttendanceDate(date)} className={`flex-shrink-0 w-20 h-24 rounded-[1.5rem] flex flex-col items-center justify-center transition-all ${isSelected ? 'bg-rose-500 text-white shadow-2xl scale-110' : 'bg-white dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20'}`}>
                     <span className={`text-[10px] font-black uppercase mb-1 ${isSelected ? 'text-white/70' : 'text-slate-400'}`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
                     <span className="text-xl font-black">{date.getDate()}</span>
                   </button>
                 );
               })}
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                <div className="space-y-8">
                   <h2 className="text-2xl font-black text-rose-600 flex items-center gap-3"><Icons.Calendar className="w-6 h-6" /> Today's Sessions</h2>
@@ -326,13 +302,7 @@ const App: React.FC = () => {
                         const isPresent = attendance[`${item.code}-${dateKey}`];
                         return (
                           <div key={item.id} className="bg-white dark:bg-[#2D1217] p-6 rounded-[2rem] border border-rose-100 dark:border-rose-900/20 flex items-center justify-between group">
-                            <div className="flex gap-4">
-                              <div className={`w-1.5 h-12 rounded-full ${COLOR_MAP[item.color].bg}`} />
-                              <div>
-                                <h4 className="font-bold text-slate-800 dark:text-pink-50">{item.title}</h4>
-                                <p className="text-xs text-slate-400 font-bold">{item.startTime} - {item.endTime}</p>
-                              </div>
-                            </div>
+                            <div className="flex gap-4"><div className={`w-1.5 h-12 rounded-full ${COLOR_MAP[item.color].bg}`} /><div><h4 className="font-bold text-slate-800 dark:text-pink-50">{item.title}</h4><p className="text-xs text-slate-400 font-bold">{item.startTime} - {item.endTime}</p></div></div>
                             <div className="flex gap-2">
                                <button onClick={() => setAttendance(prev => ({...prev, [`${item.code}-${dateKey}`]: true}))} className={`p-3 rounded-xl transition-all ${isPresent === true ? 'bg-green-500 text-white' : 'bg-slate-50 dark:bg-rose-900/20 text-slate-300'}`}><Icons.CheckCircle className="w-5 h-5" /></button>
                                <button onClick={() => setAttendance(prev => ({...prev, [`${item.code}-${dateKey}`]: false}))} className={`p-3 rounded-xl transition-all ${isPresent === false ? 'bg-red-500 text-white' : 'bg-slate-50 dark:bg-rose-900/20 text-slate-300'}`}><Icons.Shield className="w-5 h-5 rotate-180" /></button>
@@ -343,7 +313,6 @@ const App: React.FC = () => {
                     )}
                   </div>
                </div>
-               
                <div className="space-y-8">
                   <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-black text-rose-600 flex items-center gap-3"><Icons.Clipboard className="w-6 h-6" /> Priority Vault</h2>
@@ -357,10 +326,7 @@ const App: React.FC = () => {
                         <div key={a.id} className="bg-white dark:bg-[#2D1217] p-6 rounded-[2rem] border border-rose-100 dark:border-rose-900/20 flex items-center justify-between group">
                           <div className="flex items-center gap-4">
                             <button onClick={() => setAssignments(prev => prev.map(item => item.id === a.id ? {...item, status: item.status === 'completed' ? 'pending' : 'completed'} : item))} className={`p-2 rounded-xl border-2 transition-all ${a.status === 'completed' ? 'bg-green-500 border-green-500 text-white' : 'border-rose-100 dark:border-rose-900/20 text-transparent'}`}><Icons.CheckCircle className="w-4 h-4" /></button>
-                            <div>
-                              <h4 className={`font-bold ${a.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-pink-50'}`}>{a.title}</h4>
-                              <p className="text-[10px] font-black text-rose-400 uppercase">{a.courseCode} • {a.dueDate}</p>
-                            </div>
+                            <div><h4 className={`font-bold ${a.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-pink-50'}`}>{a.title}</h4><p className="text-[10px] font-black text-rose-400 uppercase">{a.courseCode} • {a.dueDate}</p></div>
                           </div>
                           <button onClick={() => setAssignments(prev => prev.filter(item => item.id !== a.id))} className="text-rose-200 hover:text-rose-500 opacity-0 group-hover:opacity-100"><Icons.Trash className="w-4 h-4" /></button>
                         </div>
@@ -376,30 +342,21 @@ const App: React.FC = () => {
           <div className="space-y-12 animate-fade-in-up">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {Array.from(new Set(SCHEDULE.map(s => s.code))).map(code => {
-                const { percentage, present, total } = getCourseAttendanceDetails(code);
+                const { percentage } = getCourseAttendanceDetails(code);
                 const isLow = percentage < 80;
                 return (
                   <div key={code} className={`bg-white dark:bg-[#2D1217] p-6 rounded-[2.5rem] border ${isLow ? 'border-red-200 shadow-xl' : 'border-rose-50'} flex flex-col items-center text-center gap-4`}>
                     <ProgressCircle percentage={percentage} size={60} strokeWidth={6} colorClass={isLow ? 'text-red-500' : 'text-rose-500'} />
-                    <div>
-                      <h4 className="font-black text-rose-600">{code}</h4>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{percentage}% Attendance</p>
-                    </div>
+                    <div><h4 className="font-black text-rose-600">{code}</h4><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{percentage}% Attendance</p></div>
                   </div>
                 );
               })}
             </div>
-
             <div className="bg-white dark:bg-[#2D1217] p-10 rounded-[3rem] border border-rose-100 dark:border-rose-900/20">
-               <div className="flex justify-between items-center mb-10">
-                  <h3 className="text-3xl font-black text-rose-600">BBA Analytics</h3>
-                  <button onClick={() => setShowAddGrade(true)} className="p-4 bg-pink-500 text-white rounded-[1.5rem] shadow-xl hover:scale-105 transition-transform font-bold text-xs uppercase tracking-widest">Add Assessment</button>
-               </div>
+               <div className="flex justify-between items-center mb-10"><h3 className="text-3xl font-black text-rose-600">BBA Analytics</h3><button onClick={() => setShowAddGrade(true)} className="p-4 bg-pink-500 text-white rounded-[1.5rem] shadow-xl hover:scale-105 transition-transform font-bold text-xs uppercase tracking-widest">Add Assessment</button></div>
                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                   <div className="lg:col-span-2 space-y-4">
-                    {grades.length === 0 ? (
-                      <p className="text-slate-400 italic">No grade logs yet. Start adding marks to see your projection.</p>
-                    ) : (
+                    {grades.length === 0 ? (<p className="text-slate-400 italic">No grade logs yet. Start adding marks.</p>) : (
                       Array.from(new Set(grades.map(g => g.courseCode))).map(code => {
                         const courseGrades = grades.filter(g => g.courseCode === code);
                         const totalMarks = courseGrades.reduce((acc, g) => acc + g.score, 0);
@@ -430,12 +387,12 @@ const App: React.FC = () => {
                 <div className="h-full flex flex-col items-center justify-center text-center p-10">
                   <div className="w-24 h-24 bg-rose-50 dark:bg-rose-900/20 rounded-[2.5rem] flex items-center justify-center text-rose-500 mb-8 shadow-inner"><Icons.Sparkles className="w-12 h-12" /></div>
                   <h4 className="font-black text-2xl mb-4 text-rose-600">Academic Concierge V2</h4>
-                  <p className="text-slate-400 max-w-sm font-medium leading-relaxed italic">Powered by Gemini 3 Flash. Analyzes BBA case studies, solves BIS problems, and cheers for you! ✨</p>
+                  <p className="text-slate-400 max-w-sm font-medium leading-relaxed italic">Analyzes case studies and solves BBA problems. 💖</p>
                 </div>
               ) : (
                 chatMessages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] sm:max-w-[75%] rounded-[2rem] px-6 py-4 shadow-xl shadow-rose-500/5 border ${msg.role === 'user' ? 'bg-rose-500 text-white rounded-tr-none border-rose-400' : 'bg-white dark:bg-[#2D1217] border-rose-100 dark:border-rose-900/20 rounded-tl-none text-slate-700 dark:text-pink-50'}`}>
+                    <div className={`max-w-[85%] sm:max-w-[75%] rounded-[2rem] px-6 py-4 shadow-xl border ${msg.role === 'user' ? 'bg-rose-500 text-white rounded-tr-none border-rose-400' : 'bg-white dark:bg-[#2D1217] border-rose-100 dark:border-rose-900/20 rounded-tl-none text-slate-700 dark:text-pink-50'}`}>
                       {msg.image && <img src={msg.image} alt="Ref" className="rounded-2xl mb-4 w-full object-cover max-h-80 shadow-md" />}
                       <div className={`text-sm leading-relaxed ${msg.role === 'assistant' ? 'prose dark:prose-invert prose-pink max-w-none' : 'font-bold'}`}>{msg.content}</div>
                       <p className={`text-[9px] mt-3 font-black opacity-40 uppercase tracking-widest ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>{msg.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
@@ -446,7 +403,6 @@ const App: React.FC = () => {
               {isTyping && <div className="flex justify-start"><div className="bg-white dark:bg-[#2D1217] border border-rose-100 dark:border-rose-900/20 rounded-full px-6 py-3 flex items-center gap-2 shadow-sm"><div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce" /><div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce [animation-delay:0.2s]" /><div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce [animation-delay:0.4s]" /></div></div>}
               <div ref={chatEndRef} />
             </div>
-            
             <div className="bg-white/80 dark:bg-[#2D1217]/80 backdrop-blur-xl p-4 rounded-[2.5rem] border border-rose-100 dark:border-rose-900/30 flex flex-col gap-4">
               {attachedImage && (
                 <div className="flex items-center gap-4 p-2 bg-rose-50/50 dark:bg-rose-900/20 rounded-2xl w-fit relative">
@@ -464,31 +420,25 @@ const App: React.FC = () => {
                   }
                 }} />
                 <button onClick={() => fileInputRef.current?.click()} className="p-3 text-rose-300 hover:text-rose-600 transition-colors"><Icons.Paperclip className="w-6 h-6" /></button>
-                <input 
-                  type="text" 
-                  value={currentQuery} 
-                  onChange={(e) => setCurrentQuery(e.target.value)} 
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()} 
-                  placeholder="Ask your concierge, Mithila..." 
-                  className="flex-grow bg-transparent border-none focus:ring-0 text-sm py-3 text-slate-700 dark:text-pink-50 placeholder:text-rose-200 outline-none" 
-                />
-                <button 
-                  onClick={sendMessage} 
-                  disabled={isTyping || (!currentQuery.trim() && !attachedImage)} 
-                  className={`p-4 rounded-[1.5rem] transition-all ${(currentQuery.trim() || attachedImage) && !isTyping ? 'bg-rose-500 text-white shadow-xl shadow-rose-500/40 active:scale-95' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-200'}`}
-                ><Icons.Send className="w-5 h-5" /></button>
+                <input type="text" value={currentQuery} onChange={(e) => setCurrentQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendMessage()} placeholder="Ask Mithila's concierge..." className="flex-grow bg-transparent border-none focus:ring-0 text-sm py-3 text-slate-700 dark:text-pink-50 placeholder:text-rose-200 outline-none" />
+                <button onClick={sendMessage} disabled={isTyping || (!currentQuery.trim() && !attachedImage)} className={`p-4 rounded-[1.5rem] transition-all ${(currentQuery.trim() || attachedImage) && !isTyping ? 'bg-rose-500 text-white shadow-xl shadow-rose-500/40 active:scale-95' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-200'}`}><Icons.Send className="w-5 h-5" /></button>
               </div>
             </div>
           </div>
         )}
       </main>
 
-      {/* Modals remain similarly styled but with [2.5rem] rounding */}
+      <footer className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/70 dark:bg-[#2D1217]/70 backdrop-blur-2xl border-t border-rose-100 dark:border-rose-900/20 px-8 py-6 flex justify-between items-center z-50">
+        {[{ id: 'dashboard', icon: Icons.Dashboard }, { id: 'academic', icon: Icons.Calendar }, { id: 'progress', icon: Icons.CheckCircle }, { id: 'ask', icon: Icons.Message }].map(item => (
+          <button key={item.id} onClick={() => setActiveTab(item.id as any)} className={`p-4 rounded-[1.25rem] transition-all ${activeTab === item.id ? 'bg-rose-500 text-white shadow-2xl' : 'text-rose-200 hover:text-rose-400'}`}><item.icon className="w-6 h-6" /></button>
+        ))}
+      </footer>
+
       {showAddAssignment && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/50 backdrop-blur-md animate-fade-in">
           <div className="bg-white dark:bg-[#2D1217] w-full max-w-md rounded-[3rem] p-10 border border-rose-100 shadow-2xl space-y-8">
             <div className="flex justify-between items-center"><h3 className="text-3xl font-black text-rose-600">Set Goal</h3><button onClick={() => setShowAddAssignment(false)} className="p-2 text-rose-200 hover:text-rose-500 transition-transform"><Icons.Clock className="w-6 h-6 rotate-45" /></button></div>
-            <form onSubmit={(e) => { e.preventDefault(); const formData = new FormData(e.currentTarget); setAssignments(prev => [...prev, { id: Date.now().toString(), title: formData.get('title') as string, courseCode: formData.get('course') as string, dueDate: formData.get('date') as string, type: 'Assignment', status: 'pending' }]); setShowAddAssignment(false); addNotification("Strategic goal logged.", "success"); }} className="space-y-6"><input name="title" required placeholder="Task Objective" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none" /><select name="course" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none">{Array.from(new Set(SCHEDULE.map(s => s.code))).map(c => <option key={c} value={c}>{c}</option>)}</select><input name="date" type="date" required className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none" /><button type="submit" className="w-full bg-rose-500 text-white font-black py-5 rounded-[1.5rem] shadow-2xl hover:scale-[1.02] transition-transform uppercase tracking-widest text-sm">Deploy Task</button></form>
+            <form onSubmit={(e) => { e.preventDefault(); const formData = new FormData(e.currentTarget); setAssignments(prev => [...prev, { id: Date.now().toString(), title: formData.get('title') as string, courseCode: formData.get('course') as string, dueDate: formData.get('date') as string, type: 'Assignment', status: 'pending' }]); setShowAddAssignment(false); addNotification("Goal logged.", "success"); }} className="space-y-6"><input name="title" required placeholder="Task Objective" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none" /><select name="course" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none">{Array.from(new Set(SCHEDULE.map(s => s.code))).map(c => <option key={c} value={c}>{c}</option>)}</select><input name="date" type="date" required className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none" /><button type="submit" className="w-full bg-rose-500 text-white font-black py-5 rounded-[1.5rem] shadow-2xl uppercase tracking-widest text-sm">Deploy Task</button></form>
           </div>
         </div>
       )}
@@ -497,24 +447,16 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/50 backdrop-blur-md animate-fade-in">
           <div className="bg-white dark:bg-[#2D1217] w-full max-w-md rounded-[3rem] p-10 border border-rose-100 shadow-2xl space-y-8">
             <div className="flex justify-between items-center"><h3 className="text-3xl font-black text-rose-600">Add Marks</h3><button onClick={() => setShowAddGrade(false)} className="p-2 text-rose-200 hover:text-rose-500 transition-transform"><Icons.Clock className="w-6 h-6 rotate-45" /></button></div>
-            <form onSubmit={(e) => { e.preventDefault(); const formData = new FormData(e.currentTarget); const type = formData.get('type') as AssessmentType; setGrades(prev => [...prev, { id: Date.now().toString(), courseCode: formData.get('course') as string, title: formData.get('title') as string, score: Number(formData.get('score')), weight: type === 'Continuous' ? 30 : type === 'Mid-term' ? 30 : 40, type }]); setShowAddGrade(false); addNotification("Academic performance updated.", "success"); }} className="space-y-6"><select name="course" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none">{Array.from(new Set(SCHEDULE.map(s => s.code))).map(c => <option key={c} value={c}>{c}</option>)}</select><select name="type" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none"><option value="Continuous">Continuous (Max 30)</option><option value="Mid-term">Mid-term (Max 30)</option><option value="Final">Final (Max 40)</option></select><input name="score" type="number" required placeholder="Marks Obtained" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none" /><button type="submit" className="w-full bg-pink-500 text-white font-black py-5 rounded-[1.5rem] shadow-2xl hover:scale-[1.02] transition-transform uppercase tracking-widest text-sm">Save Record</button></form>
+            <form onSubmit={(e) => { e.preventDefault(); const formData = new FormData(e.currentTarget); const type = formData.get('type') as AssessmentType; setGrades(prev => [...prev, { id: Date.now().toString(), courseCode: formData.get('course') as string, title: formData.get('title') as string, score: Number(formData.get('score')), weight: type === 'Continuous' ? 30 : type === 'Mid-term' ? 30 : 40, type }]); setShowAddGrade(false); addNotification("Grade updated.", "success"); }} className="space-y-6"><select name="course" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none">{Array.from(new Set(SCHEDULE.map(s => s.code))).map(c => <option key={c} value={c}>{c}</option>)}</select><select name="type" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none"><option value="Continuous">Continuous (Max 30)</option><option value="Mid-term">Mid-term (Max 30)</option><option value="Final">Final (Max 40)</option></select><input name="score" type="number" required placeholder="Marks Obtained" className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-2xl p-5 text-sm dark:text-pink-50 outline-none" /><button type="submit" className="w-full bg-pink-500 text-white font-black py-5 rounded-[1.5rem] shadow-2xl uppercase tracking-widest text-sm">Save Record</button></form>
           </div>
         </div>
       )}
 
       {isEditingNote && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/50 backdrop-blur-md animate-fade-in">
-          <div className="bg-white dark:bg-[#2D1217] w-full max-w-md rounded-[3rem] p-10 border border-rose-100 shadow-2xl space-y-8"><h3 className="text-3xl font-black text-rose-600">Daily Affirmation</h3><textarea value={personalNote} onChange={(e) => setPersonalNote(e.target.value)} rows={4} className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-3xl p-6 text-lg dark:text-pink-50 outline-none resize-none font-medium italic" /><button onClick={() => { setIsEditingNote(false); localStorage.setItem('personalNote', personalNote); }} className="w-full bg-rose-500 text-white font-black py-5 rounded-[1.5rem] shadow-2xl hover:scale-[1.02] transition-transform uppercase tracking-widest text-sm">Seal My Vision</button></div>
+          <div className="bg-white dark:bg-[#2D1217] w-full max-w-md rounded-[3rem] p-10 border border-rose-100 shadow-2xl space-y-8"><h3 className="text-3xl font-black text-rose-600">Daily Affirmation</h3><textarea value={personalNote} onChange={(e) => setPersonalNote(e.target.value)} rows={4} className="w-full bg-rose-50/50 dark:bg-rose-900/20 border-none rounded-3xl p-6 text-lg dark:text-pink-50 outline-none resize-none font-medium italic" /><button onClick={() => { setIsEditingNote(false); localStorage.setItem('personalNote', personalNote); }} className="w-full bg-rose-500 text-white font-black py-5 rounded-[1.5rem] shadow-2xl uppercase tracking-widest text-sm">Seal My Vision</button></div>
         </div>
       )}
-
-      <footer className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/70 dark:bg-[#2D1217]/70 backdrop-blur-2xl border-t border-rose-100 dark:border-rose-900/20 px-8 py-6 flex justify-between items-center z-50">
-        {[{ id: 'dashboard', icon: Icons.Dashboard }, { id: 'academic', icon: Icons.Calendar }, { id: 'progress', icon: Icons.CheckCircle }, { id: 'ask', icon: Icons.Message }].map(item => (
-          <button key={item.id} onClick={() => setActiveTab(item.id as any)} className={`p-4 rounded-[1.25rem] transition-all ${activeTab === item.id ? 'bg-rose-500 text-white shadow-2xl shadow-rose-500/40' : 'text-rose-200 hover:text-rose-400'}`}><item.icon className="w-6 h-6" /></button>
-        ))}
-      </footer>
-
-      <div className="hidden sm:block py-16 text-center border-t border-rose-100 dark:border-rose-900/10 mt-20 opacity-40"><p className="text-[10px] text-rose-300 font-black tracking-[0.4em] uppercase mb-1">Mithila Hub Enterprise Edition</p><p className="text-xs text-rose-400 flex items-center justify-center gap-2 font-black italic">Crafted with Unwavering Belief for Ishana <Icons.Heart className="w-3 h-3 fill-rose-400" /></p></div>
     </div>
   );
 };
