@@ -1,33 +1,11 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Always use new GoogleGenAI({ apiKey: process.env.API_KEY })
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-export const getStudyTips = async (subject: string): Promise<string> => {
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Provide 3 very sweet, encouraging and high-impact study tips for the course "${subject}". 
-      The tone should be supportive, professional yet warm, like a personal academic mentor who really believes in the student. 
-      Format as a clean markdown list.`,
-      config: {
-        thinkingConfig: { thinkingBudget: 0 }
-      }
-    });
-
-    return response.text || "I couldn't generate tips at this moment. You're still going to do great!";
-  } catch (error) {
-    console.error("Error generating study tips:", error);
-    return "The AI advisor is taking a quick break. Believe in yourself!";
-  }
-};
-
 export const askStudyQuestion = async (query: string, imageBase64?: string): Promise<string> => {
   try {
-    let contents;
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    let contents: any;
     
-    // Handle multimodal input if image is provided
     if (imageBase64) {
       const [mimeInfo, base64Data] = imageBase64.split(';base64,');
       const mimeType = mimeInfo.replace('data:', '');
@@ -51,7 +29,7 @@ export const askStudyQuestion = async (query: string, imageBase64?: string): Pro
       model: 'gemini-3-flash-preview',
       contents: contents,
       config: {
-        systemInstruction: "You are a warm, supportive, and brilliant academic assistant for a BBA Section 3B student. Your tone is like a caring tutor and cheerleader. Use encouraging words. If she sends a photo of her notes or textbook, help her understand the concepts deeply. Always end with a small word of encouragement like 'You've got this!' or 'Keep shining!'",
+        systemInstruction: "You are a warm, supportive, and brilliant academic assistant for a BBA Section 3B student named Mithila (Ishana). Your tone is like a caring tutor and cheerleader. Help her with marketing, math, accounting, or computer apps. If she sends a photo, explain it clearly. Always end with a sweet word of encouragement like 'You've got this, Ishana!'",
         thinkingConfig: { thinkingBudget: 0 }
       }
     });
@@ -60,5 +38,18 @@ export const askStudyQuestion = async (query: string, imageBase64?: string): Pro
   } catch (error) {
     console.error("Error in study question:", error);
     return "The study assistant is resting. Don't worry, you're doing amazing!";
+  }
+};
+
+export const getStudyTips = async (subject: string): Promise<string> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Provide 3 encouraging study tips for "${subject}".`,
+    });
+    return response.text || "Keep studying hard!";
+  } catch (error) {
+    return "You're doing great!";
   }
 };
