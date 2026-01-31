@@ -2,7 +2,7 @@
 {
   "name": "mithila-hub",
   "private": true,
-  "version": "1.1.1",
+  "version": "1.1.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^0.22.0",
+    "@google/genai": "^0.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
