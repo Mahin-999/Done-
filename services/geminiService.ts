@@ -1,15 +1,16 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Always use new GoogleGenAI({ apiKey: process.env.API_KEY })
+// Initialize the Gemini API client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getStudyTips = async (subject: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Provide 3 very sweet, encouraging and high-impact study tips for the course "${subject}". 
-      The tone should be supportive, professional yet warm, like a personal academic mentor who really believes in the student. 
+      contents: `Provide 3 very sweet, encouraging and high-impact study tips for the BBA course "${subject}". 
+      Focus on professional growth and academic excellence. 
+      The tone should be supportive, professional yet warm. 
       Format as a clean markdown list.`,
       config: {
         thinkingConfig: { thinkingBudget: 0 }
@@ -44,14 +45,20 @@ export const askStudyQuestion = async (query: string, imageBase64?: string): Pro
         ]
       };
     } else {
-      contents = query;
+      contents = { parts: [{ text: query }] };
     }
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: contents,
       config: {
-        systemInstruction: "You are a warm, supportive, and brilliant academic assistant for a BBA Section 3B student. Your tone is like a caring tutor and cheerleader. Use encouraging words. If she sends a photo of her notes or textbook, help her understand the concepts deeply. Always end with a small word of encouragement like 'You've got this!' or 'Keep shining!'",
+        systemInstruction: `You are the 'Academic Concierge', a warm, sophisticated, and brilliant mentor for Mithila Islam Ishana, a BBA Section 3B student. 
+        Your tone is premium, encouraging, and deeply knowledgeable about business topics (Marketing, Finance, Management, BIS). 
+        When she asks questions:
+        1. Be concise but insightful.
+        2. Use business terminology correctly but explain it simply if she's stuck.
+        3. If she uploads a photo, analyze the business context or math problem immediately.
+        4. Always end with a personalized, high-energy encouragement like 'Your potential is limitless, Ishana!' or 'Keep building your empire!'`,
         thinkingConfig: { thinkingBudget: 0 }
       }
     });
