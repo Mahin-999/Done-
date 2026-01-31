@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ScheduleItem, ColorType, TranscriptCourse } from './types.ts';
+import { ScheduleItem, ColorType, TranscriptCourse } from './types';
 
 export const SCHEDULE: ScheduleItem[] = [
   { id: '1', day: 0, dayName: 'Sunday', startTime: '11:00', endTime: '12:30', code: 'MKT 2127', title: 'Principles of Marketing', room: '006 (MB)', faculty: 'SKG 2', color: ColorType.BLUE, credits: 3 },
